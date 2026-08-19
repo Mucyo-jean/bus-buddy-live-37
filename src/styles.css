@@ -156,5 +156,25 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: var(--font-body);
   }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+}
+
+.leaflet-container {
+  background: oklch(0.22 0.03 248);
+  font-family: var(--font-body);
+}
+
+.bus-marker-pulse {
+  animation: bus-pulse 1.8s ease-out infinite;
+}
+
+@keyframes bus-pulse {
+  0% { box-shadow: 0 0 0 0 oklch(0.78 0.16 82 / 0.55); }
+  100% { box-shadow: 0 0 0 18px oklch(0.78 0.16 82 / 0); }
 }
