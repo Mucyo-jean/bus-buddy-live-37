@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DriverRouteImport } from './routes/driver'
+import { Route as PassengerRouteImport } from './routes/passenger'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,35 +29,44 @@ const DriverRoute = DriverRouteImport.update({
   path: '/driver',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PassengerRoute = PassengerRouteImport.update({
+  id: '/passenger',
+  path: '/passenger',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/driver': typeof DriverRoute
+  '/passenger': typeof PassengerRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/driver': typeof DriverRoute
+  '/passenger': typeof PassengerRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/driver': typeof DriverRoute
+  '/passenger': typeof PassengerRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/driver'
+  fullPaths: '/' | '/auth' | '/driver' | '/passenger'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/driver'
-  id: '__root__' | '/' | '/auth' | '/driver'
+  to: '/' | '/auth' | '/driver' | '/passenger'
+  id: '__root__' | '/' | '/auth' | '/driver' | '/passenger'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   DriverRoute: typeof DriverRoute
+  PassengerRoute: typeof PassengerRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +92,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DriverRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/passenger': {
+      id: '/passenger'
+      path: '/passenger'
+      fullPath: '/passenger'
+      preLoaderRoute: typeof PassengerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   DriverRoute: DriverRoute,
+  PassengerRoute: PassengerRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
