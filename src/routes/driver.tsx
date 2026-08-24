@@ -283,7 +283,7 @@ function DriverPage() {
               </Badge>
             </CardHeader>
             <CardContent className="space-y-3">
-              <LiveMap stops={stops} bus={pos} nextStopId={state.nextStop?.id} height="380px" />
+              <LiveMap stops={stops} bus={pos} nextStopId={state.nextStop?.id ?? null} height="380px" />
               <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                 <span>Route: {currentRoute ? `${currentRoute.origin} → ${currentRoute.destination}` : "—"}</span>
                 <span>ETA: {formatEta(state.etaSeconds)}</span>
