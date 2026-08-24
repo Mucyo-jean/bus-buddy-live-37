@@ -37,19 +37,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
       if (newSession?.user) {
-        setTimeout(() => void loadProfile(newSession.user.id), 0);
+        setTimeout(() => {
+          void loadProfile(newSession.user.id).finally(() => setLoading(false));
+        }, 0);
       } else {
         setRole(null);
         setFullName("");
+        setLoading(false);
       }
-      setLoading(false);
     });
 
-    supabase.auth.getSession().then(({ data }) => {
+    void supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
-      if (data.session?.user) void loadProfile(data.session.user.id);
-      setLoading(false);
+      if (data.session?.user) {
+        void loadProfile(data.session.user.id).finally(() => setLoading(false));
+      } else {
+        setLoading(false);
+      }
     });
+
 
     return () => sub.subscription.unsubscribe();
   }, []);
