@@ -153,13 +153,19 @@ function DriverPage() {
   }, [tripId, simulate, intervalSec, stops, busId]);
 
   const startTrip = async () => {
-    if (!user || !busId || !routeId) return toast.error("Select a bus and a route first.");
+    if (!user || !busId || !routeId) {
+      toast.error("Select a bus and a route first.");
+      return;
+    }
     const { data, error } = await supabase
       .from("trips")
       .insert({ bus_id: busId, route_id: routeId, driver_id: user.id, mode: simulate ? "simulation" : "gps" })
       .select("id")
       .single();
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     resetAnnouncements();
     setHistory([]);
     simProgress.current = 0;
