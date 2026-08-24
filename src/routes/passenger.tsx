@@ -256,9 +256,11 @@ function PassengerPage() {
                         }`}
                       >
                         <div>
-                          <p className="text-sm font-medium">
-                            {s.stop_order}. {s.name} {isNext && <Badge variant="secondary" className="ml-1">Next</Badge>}
-                          </p>
+                          <div className="flex items-center gap-1 text-sm font-medium">
+                            <span>{s.stop_order}. {s.name}</span>
+                            {isNext && <Badge variant="secondary">Next</Badge>}
+                          </div>
+
                           <p className="text-xs text-muted-foreground">
                             {state.position ? formatDistance(haversine(state.position, s)) : "Awaiting GPS"}
                           </p>
