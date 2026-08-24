@@ -153,13 +153,19 @@ function DriverPage() {
   }, [tripId, simulate, intervalSec, stops, busId]);
 
   const startTrip = async () => {
-    if (!user || !busId || !routeId) return toast.error("Select a bus and a route first.");
+    if (!user || !busId || !routeId) {
+      toast.error("Select a bus and a route first.");
+      return;
+    }
     const { data, error } = await supabase
       .from("trips")
       .insert({ bus_id: busId, route_id: routeId, driver_id: user.id, mode: simulate ? "simulation" : "gps" })
       .select("id")
       .single();
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     resetAnnouncements();
     setHistory([]);
     simProgress.current = 0;
@@ -173,7 +179,10 @@ function DriverPage() {
       .from("trips")
       .update({ status: "completed", ended_at: new Date().toISOString() })
       .eq("id", tripId);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     setTripId(null);
     toast.success("Trip completed");
   };
@@ -274,7 +283,7 @@ function DriverPage() {
               </Badge>
             </CardHeader>
             <CardContent className="space-y-3">
-              <LiveMap stops={stops} bus={pos} nextStopId={state.nextStop?.id} height="380px" />
+              <LiveMap stops={stops} bus={pos} nextStopId={state.nextStop?.id ?? null} height="380px" />
               <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                 <span>Route: {currentRoute ? `${currentRoute.origin} → ${currentRoute.destination}` : "—"}</span>
                 <span>ETA: {formatEta(state.etaSeconds)}</span>

@@ -233,7 +233,7 @@ function PassengerPage() {
                   <LiveMap
                     stops={stops}
                     bus={state.position}
-                    nextStopId={state.nextStop?.id}
+                    nextStopId={state.nextStop?.id ?? null}
                     destinationStopId={destinationId}
                     height="360px"
                   />
