@@ -179,7 +179,10 @@ function DriverPage() {
       .from("trips")
       .update({ status: "completed", ended_at: new Date().toISOString() })
       .eq("id", tripId);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     setTripId(null);
     toast.success("Trip completed");
   };
