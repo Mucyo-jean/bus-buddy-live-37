@@ -13,7 +13,14 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDistance, formatEta, haversine } from "@/lib/geo";
 import { TRACKING_CONFIG, type Stop } from "@/lib/tracking";
-import { announceOnce, resetAnnouncements, setVoiceEnabled } from "@/lib/speech";
+import {
+  announceOnce,
+  isVoiceSupported,
+  primeVoice,
+  resetAnnouncements,
+  setVoiceEnabled,
+  speak,
+} from "@/lib/speech";
 
 export const Route = createFileRoute("/passenger")({
   head: () => ({
