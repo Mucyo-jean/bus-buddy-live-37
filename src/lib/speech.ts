@@ -1,4 +1,5 @@
 let enabled = true;
+let primed = false;
 const spoken = new Set<string>();
 
 export function setVoiceEnabled(v: boolean) {
@@ -10,6 +11,27 @@ export function setVoiceEnabled(v: boolean) {
 
 export function isVoiceSupported() {
   return typeof window !== "undefined" && "speechSynthesis" in window;
+}
+
+export function isVoicePrimed() {
+  return primed;
+}
+
+/**
+ * Browsers block speech synthesis until the user interacts with the page.
+ * Call this from a click handler once to unlock audio for later announcements.
+ */
+export function primeVoice() {
+  if (!isVoiceSupported()) return false;
+  try {
+    const u = new SpeechSynthesisUtterance(" ");
+    u.volume = 0;
+    window.speechSynthesis.speak(u);
+    primed = true;
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -25,6 +47,8 @@ export function announceOnce(key: string, text: string) {
 
 export function speak(text: string) {
   if (!enabled || !isVoiceSupported()) return;
+  // Resume in case the queue was paused by the browser.
+  window.speechSynthesis.resume();
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.rate = 0.98;
   utterance.pitch = 1;

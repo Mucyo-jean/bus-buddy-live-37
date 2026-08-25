@@ -34,9 +34,10 @@ function AuthPage() {
   const [signupRole, setSignupRole] = useState<AppRole>("passenger");
 
   useEffect(() => {
-    if (!loading && user && role) {
-      void navigate({ to: role === "admin" ? "/admin" : role === "driver" ? "/driver" : "/passenger" });
-    }
+    if (loading || !user) return;
+    // Never strand a signed-in user on the auth screen: default to passenger
+    // when the role row has not resolved.
+    void navigate({ to: role === "admin" ? "/admin" : role === "driver" ? "/driver" : "/passenger" });
   }, [user, role, loading]);
 
   const signIn = async (e: React.FormEvent<HTMLFormElement>) => {

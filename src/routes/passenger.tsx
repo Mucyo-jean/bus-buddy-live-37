@@ -13,7 +13,14 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDistance, formatEta, haversine } from "@/lib/geo";
 import { TRACKING_CONFIG, type Stop } from "@/lib/tracking";
-import { announceOnce, resetAnnouncements, setVoiceEnabled } from "@/lib/speech";
+import {
+  announceOnce,
+  isVoiceSupported,
+  primeVoice,
+  resetAnnouncements,
+  setVoiceEnabled,
+  speak,
+} from "@/lib/speech";
 
 export const Route = createFileRoute("/passenger")({
   head: () => ({
@@ -40,6 +47,8 @@ function PassengerPage() {
   const [busId, setBusId] = useState<string | null>(null);
   const [destinationId, setDestinationId] = useState<string | null>(null);
   const [voice, setVoice] = useState(true);
+  const [audioReady, setAudioReady] = useState(false);
+  const [log, setLog] = useState<{ at: string; text: string }[]>([]);
   const [activeTripBusIds, setActiveTripBusIds] = useState<string[]>([]);
 
   useEffect(() => {
@@ -47,6 +56,21 @@ function PassengerPage() {
   }, [user, loading]);
 
   useEffect(() => setVoiceEnabled(voice), [voice]);
+
+  const logAnnouncement = (text: string) =>
+    setLog((prev) => [{ at: new Date().toLocaleTimeString(), text }, ...prev].slice(0, 8));
+
+  const enableAudio = () => {
+    if (primeVoice()) {
+      setAudioReady(true);
+      setVoice(true);
+      setVoiceEnabled(true);
+      speak("Voice announcements enabled.");
+      logAnnouncement("Voice announcements enabled.");
+    } else {
+      toast.error("Voice announcements are not supported in this browser.");
+    }
+  };
 
   useEffect(() => {
     void (async () => {
@@ -97,13 +121,17 @@ function PassengerPage() {
   useEffect(() => {
     if (!busId || state.stale) return;
     if (state.phase === "approaching" && state.nextStop) {
-      if (announceOnce(`approach-${busId}-${state.nextStop.id}`, `Next stop: ${state.nextStop.name}.`)) {
-        toast(`Next stop: ${state.nextStop.name}`);
+      const text = `Next stop: ${state.nextStop.name}.`;
+      if (announceOnce(`approach-${busId}-${state.nextStop.id}`, text)) {
+        toast(text);
+        logAnnouncement(text);
       }
     }
     if (state.phase === "arrived" && state.currentStop) {
-      if (announceOnce(`arrive-${busId}-${state.currentStop.id}`, `You have arrived at ${state.currentStop.name}.`)) {
-        toast.success(`You have arrived at ${state.currentStop.name}`);
+      const text = `You have arrived at ${state.currentStop.name}.`;
+      if (announceOnce(`arrive-${busId}-${state.currentStop.id}`, text)) {
+        toast.success(text);
+        logAnnouncement(text);
       }
     }
   }, [state.phase, state.nextStop?.id, state.currentStop?.id, busId, state.stale]);
@@ -111,13 +139,10 @@ function PassengerPage() {
   useEffect(() => {
     if (!destination || distanceToDestination === null) return;
     if (distanceToDestination <= TRACKING_CONFIG.approachRadiusM * 2) {
-      if (
-        announceOnce(
-          `destination-${busId}-${destination.id}`,
-          `Your destination, ${destination.name}, is approaching.`,
-        )
-      ) {
-        toast.warning(`Your destination, ${destination.name}, is approaching.`);
+      const text = `Your destination, ${destination.name}, is approaching.`;
+      if (announceOnce(`destination-${busId}-${destination.id}`, text)) {
+        toast.warning(text);
+        logAnnouncement(text);
       }
     }
   }, [distanceToDestination, destination?.id, busId]);
@@ -206,12 +231,35 @@ function PassengerPage() {
                       {selectedRoute ? `${selectedRoute.origin} → ${selectedRoute.destination}` : "No route assigned"}
                     </p>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => setVoice((v) => !v)}>
-                    {voice ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
-                    {voice ? "Voice on" : "Voice off"}
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const text = state.nextStop
+                          ? `Next stop: ${state.nextStop.name}.`
+                          : "Voice announcements are working.";
+                        if (!audioReady) primeVoice();
+                        setAudioReady(true);
+                        speak(text);
+                        logAnnouncement(`Test — ${text}`);
+                      }}
+                    >
+                      Test announcement
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setVoice((v) => !v)}>
+                      {voice ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
+                      {voice ? "Voice on" : "Voice off"}
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {isVoiceSupported() && !audioReady && (
+                    <div className="flex items-center justify-between gap-3 rounded-md border border-primary/50 bg-primary/10 px-3 py-2 text-sm">
+                      <span>Enable sound so stop announcements can play automatically.</span>
+                      <Button size="sm" onClick={enableAudio}>Enable voice</Button>
+                    </div>
+                  )}
                   <div className="grid gap-3 sm:grid-cols-4">
                     <Info label="Current stop" value={state.currentStop?.name ?? "—"} />
                     <Info label="Next stop" value={state.nextStop?.name ?? "End of route"} />
@@ -237,6 +285,23 @@ function PassengerPage() {
                     destinationStopId={destinationId}
                     height="360px"
                   />
+                  <div className="rounded-md border border-border bg-muted/30 px-3 py-2">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Announcements</p>
+                    {log.length === 0 ? (
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Announcements will appear here as the bus approaches and arrives at stops.
+                      </p>
+                    ) : (
+                      <ul className="mt-1 space-y-1 text-sm">
+                        {log.map((l, i) => (
+                          <li key={`${l.at}-${i}`} className="flex gap-2">
+                            <span className="text-xs text-muted-foreground">{l.at}</span>
+                            <span>{l.text}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
 
