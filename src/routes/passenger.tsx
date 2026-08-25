@@ -121,13 +121,17 @@ function PassengerPage() {
   useEffect(() => {
     if (!busId || state.stale) return;
     if (state.phase === "approaching" && state.nextStop) {
-      if (announceOnce(`approach-${busId}-${state.nextStop.id}`, `Next stop: ${state.nextStop.name}.`)) {
-        toast(`Next stop: ${state.nextStop.name}`);
+      const text = `Next stop: ${state.nextStop.name}.`;
+      if (announceOnce(`approach-${busId}-${state.nextStop.id}`, text)) {
+        toast(text);
+        logAnnouncement(text);
       }
     }
     if (state.phase === "arrived" && state.currentStop) {
-      if (announceOnce(`arrive-${busId}-${state.currentStop.id}`, `You have arrived at ${state.currentStop.name}.`)) {
-        toast.success(`You have arrived at ${state.currentStop.name}`);
+      const text = `You have arrived at ${state.currentStop.name}.`;
+      if (announceOnce(`arrive-${busId}-${state.currentStop.id}`, text)) {
+        toast.success(text);
+        logAnnouncement(text);
       }
     }
   }, [state.phase, state.nextStop?.id, state.currentStop?.id, busId, state.stale]);
@@ -135,13 +139,10 @@ function PassengerPage() {
   useEffect(() => {
     if (!destination || distanceToDestination === null) return;
     if (distanceToDestination <= TRACKING_CONFIG.approachRadiusM * 2) {
-      if (
-        announceOnce(
-          `destination-${busId}-${destination.id}`,
-          `Your destination, ${destination.name}, is approaching.`,
-        )
-      ) {
-        toast.warning(`Your destination, ${destination.name}, is approaching.`);
+      const text = `Your destination, ${destination.name}, is approaching.`;
+      if (announceOnce(`destination-${busId}-${destination.id}`, text)) {
+        toast.warning(text);
+        logAnnouncement(text);
       }
     }
   }, [distanceToDestination, destination?.id, busId]);
