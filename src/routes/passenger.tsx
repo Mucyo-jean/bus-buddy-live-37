@@ -47,6 +47,8 @@ function PassengerPage() {
   const [busId, setBusId] = useState<string | null>(null);
   const [destinationId, setDestinationId] = useState<string | null>(null);
   const [voice, setVoice] = useState(true);
+  const [audioReady, setAudioReady] = useState(false);
+  const [log, setLog] = useState<{ at: string; text: string }[]>([]);
   const [activeTripBusIds, setActiveTripBusIds] = useState<string[]>([]);
 
   useEffect(() => {
@@ -54,6 +56,21 @@ function PassengerPage() {
   }, [user, loading]);
 
   useEffect(() => setVoiceEnabled(voice), [voice]);
+
+  const logAnnouncement = (text: string) =>
+    setLog((prev) => [{ at: new Date().toLocaleTimeString(), text }, ...prev].slice(0, 8));
+
+  const enableAudio = () => {
+    if (primeVoice()) {
+      setAudioReady(true);
+      setVoice(true);
+      setVoiceEnabled(true);
+      speak("Voice announcements enabled.");
+      logAnnouncement("Voice announcements enabled.");
+    } else {
+      toast.error("Voice announcements are not supported in this browser.");
+    }
+  };
 
   useEffect(() => {
     void (async () => {
