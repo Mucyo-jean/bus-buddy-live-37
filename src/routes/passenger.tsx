@@ -285,6 +285,23 @@ function PassengerPage() {
                     destinationStopId={destinationId}
                     height="360px"
                   />
+                  <div className="rounded-md border border-border bg-muted/30 px-3 py-2">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Announcements</p>
+                    {log.length === 0 ? (
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Announcements will appear here as the bus approaches and arrives at stops.
+                      </p>
+                    ) : (
+                      <ul className="mt-1 space-y-1 text-sm">
+                        {log.map((l, i) => (
+                          <li key={`${l.at}-${i}`} className="flex gap-2">
+                            <span className="text-xs text-muted-foreground">{l.at}</span>
+                            <span>{l.text}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
 
