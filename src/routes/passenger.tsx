@@ -231,12 +231,35 @@ function PassengerPage() {
                       {selectedRoute ? `${selectedRoute.origin} → ${selectedRoute.destination}` : "No route assigned"}
                     </p>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => setVoice((v) => !v)}>
-                    {voice ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
-                    {voice ? "Voice on" : "Voice off"}
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const text = state.nextStop
+                          ? `Next stop: ${state.nextStop.name}.`
+                          : "Voice announcements are working.";
+                        if (!audioReady) primeVoice();
+                        setAudioReady(true);
+                        speak(text);
+                        logAnnouncement(`Test — ${text}`);
+                      }}
+                    >
+                      Test announcement
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setVoice((v) => !v)}>
+                      {voice ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
+                      {voice ? "Voice on" : "Voice off"}
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {isVoiceSupported() && !audioReady && (
+                    <div className="flex items-center justify-between gap-3 rounded-md border border-primary/50 bg-primary/10 px-3 py-2 text-sm">
+                      <span>Enable sound so stop announcements can play automatically.</span>
+                      <Button size="sm" onClick={enableAudio}>Enable voice</Button>
+                    </div>
+                  )}
                   <div className="grid gap-3 sm:grid-cols-4">
                     <Info label="Current stop" value={state.currentStop?.name ?? "—"} />
                     <Info label="Next stop" value={state.nextStop?.name ?? "End of route"} />
