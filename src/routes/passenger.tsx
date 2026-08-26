@@ -7,12 +7,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { AppShell } from "@/components/AppShell";
 import { LiveMap } from "@/components/LiveMap";
 import { useBusTracking } from "@/hooks/useBusTracking";
+import { useAnnouncementSettings } from "@/hooks/useAnnouncementSettings";
+import { AnnouncementSettings } from "@/components/AnnouncementSettings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDistance, formatEta, haversine } from "@/lib/geo";
-import { TRACKING_CONFIG, type Stop } from "@/lib/tracking";
+import { type Stop } from "@/lib/tracking";
 import {
   announceOnce,
   isVoiceSupported,
@@ -99,7 +101,13 @@ function PassengerPage() {
       .then(({ data }) => setStops((data ?? []) as Stop[]));
   }, [selectedBus?.route_id, busId]);
 
-  const { state } = useBusTracking(busId, stops);
+  const { thresholds, update: updateThresholds, reset: resetThresholds } = useAnnouncementSettings();
+  const { state } = useBusTracking(busId, stops, thresholds);
+
+  // New thresholds should be able to fire announcements again.
+  useEffect(() => {
+    resetAnnouncements();
+  }, [thresholds]);
 
   // Restore any saved destination for this bus.
   useEffect(() => {
@@ -138,14 +146,14 @@ function PassengerPage() {
 
   useEffect(() => {
     if (!destination || distanceToDestination === null) return;
-    if (distanceToDestination <= TRACKING_CONFIG.approachRadiusM * 2) {
+    if (distanceToDestination <= thresholds.approachRadiusM * 2) {
       const text = `Your destination, ${destination.name}, is approaching.`;
       if (announceOnce(`destination-${busId}-${destination.id}`, text)) {
         toast.warning(text);
         logAnnouncement(text);
       }
     }
-  }, [distanceToDestination, destination?.id, busId]);
+  }, [distanceToDestination, destination?.id, busId, thresholds.approachRadiusM]);
 
   const saveDestination = async (stop: Stop) => {
     if (!user || !busId) return;
@@ -247,6 +255,11 @@ function PassengerPage() {
                     >
                       Test announcement
                     </Button>
+                    <AnnouncementSettings
+                      thresholds={thresholds}
+                      onChange={updateThresholds}
+                      onReset={resetThresholds}
+                    />
                     <Button variant="outline" size="sm" onClick={() => setVoice((v) => !v)}>
                       {voice ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
                       {voice ? "Voice on" : "Voice off"}
