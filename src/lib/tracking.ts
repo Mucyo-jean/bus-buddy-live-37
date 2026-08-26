@@ -81,7 +81,9 @@ export function computeTripState(
   stops: Stop[],
   history: Sample[],
   now: number = Date.now(),
+  thresholds: TrackingThresholds = DEFAULT_THRESHOLDS,
 ): TripState {
+  const { approachRadiusM, arrivalRadiusM, approachEtaSeconds } = thresholds;
   const ordered = [...stops].sort((a, b) => a.stop_order - b.stop_order);
   const latest = history[history.length - 1] ?? null;
   const base: TripState = {
