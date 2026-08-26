@@ -5,6 +5,8 @@ export const TRACKING_CONFIG = {
   approachRadiusM: 300,
   /** Distance (m) at which the bus counts as arrived at a stop. */
   arrivalRadiusM: 80,
+  /** ETA (s) to the next stop that also triggers the approaching announcement. */
+  approachEtaSeconds: 60,
   /** Distance (m) off the planned polyline that counts as a deviation. */
   deviationRadiusM: 250,
   /** Movement (m) below which the bus counts as stationary. */
@@ -15,6 +17,25 @@ export const TRACKING_CONFIG = {
   staleSeconds: 30,
   /** Default driver GPS ping interval (s). */
   defaultIntervalSeconds: 6,
+};
+
+/** User-adjustable announcement triggers. */
+export type TrackingThresholds = {
+  approachRadiusM: number;
+  arrivalRadiusM: number;
+  approachEtaSeconds: number;
+};
+
+export const DEFAULT_THRESHOLDS: TrackingThresholds = {
+  approachRadiusM: TRACKING_CONFIG.approachRadiusM,
+  arrivalRadiusM: TRACKING_CONFIG.arrivalRadiusM,
+  approachEtaSeconds: TRACKING_CONFIG.approachEtaSeconds,
+};
+
+export const THRESHOLD_LIMITS = {
+  approachRadiusM: { min: 50, max: 1500, step: 50 },
+  arrivalRadiusM: { min: 20, max: 300, step: 10 },
+  approachEtaSeconds: { min: 0, max: 300, step: 15 },
 };
 
 export type Stop = {
@@ -60,7 +81,9 @@ export function computeTripState(
   stops: Stop[],
   history: Sample[],
   now: number = Date.now(),
+  thresholds: TrackingThresholds = DEFAULT_THRESHOLDS,
 ): TripState {
+  const { approachRadiusM, arrivalRadiusM, approachEtaSeconds } = thresholds;
   const ordered = [...stops].sort((a, b) => a.stop_order - b.stop_order);
   const latest = history[history.length - 1] ?? null;
   const base: TripState = {
@@ -99,15 +122,15 @@ export function computeTripState(
   // Snap to a stop when the bus is basically on top of it.
   const distToCurrent = haversine(pos, ordered[currentIndex]!);
   let distToNext = haversine(pos, ordered[nextIndex]!);
-  if (distToNext <= TRACKING_CONFIG.arrivalRadiusM && nextIndex < ordered.length - 1) {
+  if (distToNext <= arrivalRadiusM && nextIndex < ordered.length - 1) {
     currentIndex = nextIndex;
     nextIndex = Math.min(nextIndex + 1, ordered.length - 1);
     distToNext = haversine(pos, ordered[nextIndex]!);
   }
 
   const arrivedAtNext =
-    haversine(pos, ordered[nextIndex]!) <= TRACKING_CONFIG.arrivalRadiusM ||
-    (currentIndex !== nextIndex && distToCurrent <= TRACKING_CONFIG.arrivalRadiusM);
+    haversine(pos, ordered[nextIndex]!) <= arrivalRadiusM ||
+    (currentIndex !== nextIndex && distToCurrent <= arrivalRadiusM);
 
   const speedKmh = latest.speed_kmh ?? recentSpeedKmh(history);
   const etaSeconds =
@@ -131,7 +154,11 @@ export function computeTripState(
 
   let phase: TripState["phase"] = "en_route";
   if (arrivedAtNext) phase = "arrived";
-  else if (distToNext <= TRACKING_CONFIG.approachRadiusM) phase = "approaching";
+  else if (
+    distToNext <= approachRadiusM ||
+    (approachEtaSeconds > 0 && etaSeconds !== null && etaSeconds <= approachEtaSeconds)
+  )
+    phase = "approaching";
 
   const currentStop = currentIndex === nextIndex ? ordered[currentIndex]! : ordered[currentIndex]!;
   const nextStop = nextIndex === currentIndex ? null : ordered[nextIndex]!;
