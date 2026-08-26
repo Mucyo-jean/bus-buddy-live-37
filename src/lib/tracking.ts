@@ -5,6 +5,8 @@ export const TRACKING_CONFIG = {
   approachRadiusM: 300,
   /** Distance (m) at which the bus counts as arrived at a stop. */
   arrivalRadiusM: 80,
+  /** ETA (s) to the next stop that also triggers the approaching announcement. */
+  approachEtaSeconds: 60,
   /** Distance (m) off the planned polyline that counts as a deviation. */
   deviationRadiusM: 250,
   /** Movement (m) below which the bus counts as stationary. */
@@ -15,6 +17,25 @@ export const TRACKING_CONFIG = {
   staleSeconds: 30,
   /** Default driver GPS ping interval (s). */
   defaultIntervalSeconds: 6,
+};
+
+/** User-adjustable announcement triggers. */
+export type TrackingThresholds = {
+  approachRadiusM: number;
+  arrivalRadiusM: number;
+  approachEtaSeconds: number;
+};
+
+export const DEFAULT_THRESHOLDS: TrackingThresholds = {
+  approachRadiusM: TRACKING_CONFIG.approachRadiusM,
+  arrivalRadiusM: TRACKING_CONFIG.arrivalRadiusM,
+  approachEtaSeconds: TRACKING_CONFIG.approachEtaSeconds,
+};
+
+export const THRESHOLD_LIMITS = {
+  approachRadiusM: { min: 50, max: 1500, step: 50 },
+  arrivalRadiusM: { min: 20, max: 300, step: 10 },
+  approachEtaSeconds: { min: 0, max: 300, step: 15 },
 };
 
 export type Stop = {
