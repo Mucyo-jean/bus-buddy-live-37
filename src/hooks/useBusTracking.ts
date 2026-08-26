@@ -1,12 +1,23 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { computeTripState, type Sample, type Stop, type TripState } from "@/lib/tracking";
+import {
+  computeTripState,
+  DEFAULT_THRESHOLDS,
+  type Sample,
+  type Stop,
+  type TrackingThresholds,
+  type TripState,
+} from "@/lib/tracking";
 
 /**
  * Subscribes to live locations for one bus (realtime + initial fetch) and
  * derives the context-aware trip state from the route's ordered stops.
  */
-export function useBusTracking(busId: string | null, stops: Stop[]) {
+export function useBusTracking(
+  busId: string | null,
+  stops: Stop[],
+  thresholds: TrackingThresholds = DEFAULT_THRESHOLDS,
+) {
   const [history, setHistory] = useState<Sample[]>([]);
   const [tick, setTick] = useState(0);
   const busRef = useRef(busId);
