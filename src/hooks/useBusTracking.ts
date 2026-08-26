@@ -63,8 +63,8 @@ export function useBusTracking(
   }, []);
 
   const state: TripState = useMemo(
-    () => computeTripState(stops, history, Date.now()),
-    [stops, history, tick],
+    () => computeTripState(stops, history, Date.now(), thresholds),
+    [stops, history, tick, thresholds],
   );
 
   return { history, state };
