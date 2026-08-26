@@ -122,15 +122,15 @@ export function computeTripState(
   // Snap to a stop when the bus is basically on top of it.
   const distToCurrent = haversine(pos, ordered[currentIndex]!);
   let distToNext = haversine(pos, ordered[nextIndex]!);
-  if (distToNext <= TRACKING_CONFIG.arrivalRadiusM && nextIndex < ordered.length - 1) {
+  if (distToNext <= arrivalRadiusM && nextIndex < ordered.length - 1) {
     currentIndex = nextIndex;
     nextIndex = Math.min(nextIndex + 1, ordered.length - 1);
     distToNext = haversine(pos, ordered[nextIndex]!);
   }
 
   const arrivedAtNext =
-    haversine(pos, ordered[nextIndex]!) <= TRACKING_CONFIG.arrivalRadiusM ||
-    (currentIndex !== nextIndex && distToCurrent <= TRACKING_CONFIG.arrivalRadiusM);
+    haversine(pos, ordered[nextIndex]!) <= arrivalRadiusM ||
+    (currentIndex !== nextIndex && distToCurrent <= arrivalRadiusM);
 
   const speedKmh = latest.speed_kmh ?? recentSpeedKmh(history);
   const etaSeconds =
@@ -154,7 +154,11 @@ export function computeTripState(
 
   let phase: TripState["phase"] = "en_route";
   if (arrivedAtNext) phase = "arrived";
-  else if (distToNext <= TRACKING_CONFIG.approachRadiusM) phase = "approaching";
+  else if (
+    distToNext <= approachRadiusM ||
+    (approachEtaSeconds > 0 && etaSeconds !== null && etaSeconds <= approachEtaSeconds)
+  )
+    phase = "approaching";
 
   const currentStop = currentIndex === nextIndex ? ordered[currentIndex]! : ordered[currentIndex]!;
   const nextStop = nextIndex === currentIndex ? null : ordered[nextIndex]!;
